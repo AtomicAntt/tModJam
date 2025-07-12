@@ -1,0 +1,3 @@
+displayName = ZZZ Mod
+author = Atomic Ant
+version = 0.1
