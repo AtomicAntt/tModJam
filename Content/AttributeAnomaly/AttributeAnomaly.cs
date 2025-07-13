@@ -107,7 +107,7 @@ namespace ZZZMod.Content.AttributeAnomaly
             ActivateAnomalyEffect(npc, givenBuffID, totalDamage);
 
             npc.StrikeNPC(npc.CalculateHitInfo(totalDamage, 1));
-            Main.NewText($"Inflicted attribute anomaly! Did {anomalyMultiplier} * {buffDamage} * {remainingBuff/60} = {totalDamage} damage!");
+            //Main.NewText($"Inflicted attribute anomaly! Did {anomalyMultiplier} * {buffDamage} * {remainingBuff/60} = {totalDamage} damage!");
 
             float disorderCalc = 0;
             int totalDisorder = 0;
@@ -127,7 +127,7 @@ namespace ZZZMod.Content.AttributeAnomaly
 
             if (totalDisorder > 0)
             {
-                Main.NewText($"Inflicted disrder! Did {totalDisorder} damage!");
+                //Main.NewText($"Inflicted disrder! Did {totalDisorder} damage!");
                 npc.StrikeNPC(npc.CalculateHitInfo(totalDisorder, 1));
                 CombatText.NewText(
                     npc.Hitbox,
