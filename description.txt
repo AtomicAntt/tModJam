@@ -1,1 +1,12 @@
-Modify this file with a description of your mod.
+This mod takes inspiration for the Attribute Anomaly mechanic from Zenless Zone Zero!
+
+Stacking debuffs (Example: Frostburn, On Fire!, and Cursed Inferno) of the same type will inflict Anomaly Buildup! Once you reach a certain level of anomaly buildup, the enemy will be afflicted with an Attribute Anomaly!
+
+If you inflict Attribute Anomaly while having anomaly buildup of other debuffs, you will cause Disorder which will deal bonus damage!
+
+Now it's a lot more favorable to use weapons that stack debuffs quickly, like flamethrowers, and applying two debuffs lets you apply massive bursts of Disorder damage!
+
+Usually applying damaging debuffs to bosses don't feel impactful at all, but this mod can make those useless debuffs turn overpowered with the help of Attribute Anomaly!
+
+Made for the first official tmodloader jam!
+https://github.com/AtomicAntt/tModJam

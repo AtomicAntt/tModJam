@@ -25,7 +25,7 @@ namespace ZZZMod.Content.AttributeAnomaly
         {
             for (int i = 0; i < npc.buffType.Length; i++) // Check NPC Buffs for new ones
             {
-                if (npc.buffType[i] != 0 && previousBuffs[i] == 0) // New buff in town
+                if (npc.buffType[i] != 0 && previousBuffs[i] == 0 && IsDamagingDebuff(npc.buffType[i])) // New buff in town
                 {
                     if (previousBuffCounters.ContainsKey(npc.buffType[i])) // If it was a buff previously applied but expired, inherit the old counter value!
                     {
@@ -43,7 +43,7 @@ namespace ZZZMod.Content.AttributeAnomaly
                     }
                 }
 
-                if (npc.buffType[i] != 0 && previousBuffs[i] != 0 && previousBuffTimes[i] < npc.buffTime[i]) // If the debuff time increases, we can assume it is reapplied.
+                if (npc.buffType[i] != 0 && previousBuffs[i] != 0 && previousBuffTimes[i] < npc.buffTime[i] && IsDamagingDebuff(npc.buffType[i])) // If the debuff time increases, we can assume it is reapplied.
                 {
                     buffCounter[i]++;
                     //Main.NewText($"{npc.FullName} is hit with this buff again: {Lang.GetBuffName(npc.buffType[i])}. It has been {buffCounter[i]} times so far!");
@@ -54,7 +54,7 @@ namespace ZZZMod.Content.AttributeAnomaly
                     }
                 }
 
-                if (npc.buffType[i] == 0 && previousBuffs[i] != 0) // If a buff doesn't exist anymore, then the counter would disappear. HOWEVER, we will also store the counter for when the player wants to start anomaly buildup again on the same element.
+                if (npc.buffType[i] == 0 && previousBuffs[i] != 0 && IsDamagingDebuff(npc.buffType[i])) // If a buff doesn't exist anymore, then the counter would disappear. HOWEVER, we will also store the counter for when the player wants to start anomaly buildup again on the same element.
                 {
                     previousBuffCounters[previousBuffs[i]] = buffCounter[i];
                     buffCounter[i] = 0;
@@ -69,7 +69,7 @@ namespace ZZZMod.Content.AttributeAnomaly
             anomalyProgress.Clear();
             for (int i = 0; i < npc.buffType.Length; i++)
             {
-                if (npc.buffType[i] != 0)
+                if (npc.buffType[i] != 0 && IsDamagingDebuff(npc.buffType[i]))
                 {
                     int buildupNeeded = ReturnAnomalyBuildup(npc.buffType[i]);
                     if (buildupNeeded > 0)
@@ -141,10 +141,6 @@ namespace ZZZMod.Content.AttributeAnomaly
                     totalDisorder + "!",
                     dramatic: true
                     );
-            }
-            else
-            {
-                Main.NewText($"Disorder calc = {disorderCalc}");
             }
 
             SoundEngine.PlaySound(SoundID.Item14, center);
@@ -309,6 +305,33 @@ namespace ZZZMod.Content.AttributeAnomaly
                     return "Daybreak";
                 default:
                     return "error: developer did not account for this anomaly :(";
+            }
+        }
+
+        public static bool IsDamagingDebuff(int givenBuffID)
+        {
+            switch (givenBuffID)
+            {
+                case BuffID.Poisoned:
+                    return true;
+                case BuffID.OnFire:
+                    return true;
+                case BuffID.Frostburn:
+                    return true;
+                case BuffID.OnFire3: // hellfire is apparently onfire3, and there's no onfire2 lol
+                    return true;
+                case BuffID.ShadowFlame:
+                    return true;
+                case BuffID.CursedInferno:
+                    return true;
+                case BuffID.Frostburn2: // frostbite
+                    return true;
+                case BuffID.Venom:
+                    return true;
+                case BuffID.Daybreak:
+                    return true;
+                default:
+                    return false;
             }
         }
 
