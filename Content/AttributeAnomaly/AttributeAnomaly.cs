@@ -68,6 +68,8 @@ namespace ZZZMod.Content.AttributeAnomaly
             int buffDamage = ReturnBuffDPS(givenBuffID);
             int anomalyMultiplier = ReturnAnomalyMultiplier(givenBuffID);
 
+            int totalDamage = anomalyMultiplier * buffDamage * remainingBuff / 60;
+
             for (int i = 0; i < 80; i++)
             {
                 Vector2 velocity = Main.rand.NextVector2Circular(10f, 10f);
@@ -84,8 +86,10 @@ namespace ZZZMod.Content.AttributeAnomaly
                 dust.noGravity = true;
             }
 
-            npc.StrikeNPC(npc.CalculateHitInfo(anomalyMultiplier * buffDamage * remainingBuff/60, 1));
-            Main.NewText($"Inflicted attribute anomaly! Did {anomalyMultiplier} * {buffDamage} * {remainingBuff/60} = {anomalyMultiplier * buffDamage * remainingBuff/60} damage!");
+            ActivateAnomalyEffect(npc, givenBuffID, totalDamage);
+
+            npc.StrikeNPC(npc.CalculateHitInfo(totalDamage, 1));
+            Main.NewText($"Inflicted attribute anomaly! Did {anomalyMultiplier} * {buffDamage} * {remainingBuff/60} = {totalDamage} damage!");
 
             SoundEngine.PlaySound(SoundID.Item14, center);
         }
@@ -195,6 +199,36 @@ namespace ZZZMod.Content.AttributeAnomaly
                     return DustID.IchorTorch;
                 default:
                     return 0;
+            }
+        }
+
+        public void ActivateAnomalyEffect(NPC npc, int givenBuffID, int totalDamage)
+        {
+            CombatText.NewText(
+                npc.Hitbox,
+                Color.MediumPurple,
+                "Anomaly!",
+                dramatic: true
+                );
+            CombatText.NewText(
+                npc.Hitbox,
+                Color.MediumPurple,
+                totalDamage+"!",
+                dramatic: true
+                );
+
+            for (int i = 0; i < 10; i++)
+            {
+                Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                Projectile.NewProjectile(
+                    npc.GetSource_FromAI(),
+                    npc.Center,
+                    velocity,
+                    ProjectileID.CursedFlameFriendly,
+                    40,
+                    2f,
+                    Main.myPlayer
+                );
             }
         }
     }
