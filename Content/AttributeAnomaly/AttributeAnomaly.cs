@@ -68,11 +68,11 @@ namespace ZZZMod.Content.AttributeAnomaly
             int buffDamage = ReturnBuffDPS(givenBuffID);
             int anomalyMultiplier = ReturnAnomalyMultiplier(givenBuffID);
 
-            for (int i = 0; i < 40; i++)
+            for (int i = 0; i < 80; i++)
             {
                 Vector2 velocity = Main.rand.NextVector2Circular(10f, 10f);
-                Dust dust = Dust.NewDustPerfect(center, DustID.CursedTorch, velocity);
-                dust.scale = 3.5f;
+                Dust dust = Dust.NewDustPerfect(center, ReturnTorchType(givenBuffID), velocity);
+                dust.scale = 4.5f;
                 dust.noGravity = true;
             }
 
@@ -144,7 +144,6 @@ namespace ZZZMod.Content.AttributeAnomaly
             }
         }
 
-        
         public static int ReturnAnomalyBuildup(int givenBuffID) // Amount of times a buff must be applied AFTER being applied to inflict anomaly attribute dmg
         {
             switch (givenBuffID) 
@@ -167,6 +166,33 @@ namespace ZZZMod.Content.AttributeAnomaly
                     return 10;
                 case BuffID.Daybreak:
                     return 10;
+                default:
+                    return 0;
+            }
+        }
+
+        public static int ReturnTorchType(int givenBuffID)
+        {
+            switch (givenBuffID)
+            {
+                case BuffID.Poisoned:
+                    return DustID.Poisoned;
+                case BuffID.OnFire:
+                    return DustID.Torch;
+                case BuffID.Frostburn:
+                    return DustID.IceTorch;
+                case BuffID.OnFire3: // hellfire is apparently onfire3, and there's no onfire2 lol
+                    return DustID.Torch;
+                case BuffID.ShadowFlame:
+                    return DustID.Shadowflame;
+                case BuffID.CursedInferno:
+                    return DustID.CursedTorch;
+                case BuffID.Frostburn2: // frostbite
+                    return DustID.IceTorch;
+                case BuffID.Venom:
+                    return DustID.PurpleTorch;
+                case BuffID.Daybreak:
+                    return DustID.IchorTorch;
                 default:
                     return 0;
             }
