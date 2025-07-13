@@ -34,7 +34,7 @@ namespace ZZZMod.Content.AttributeAnomaly
                     }
 
                     buffCounter[i]++;
-                    Main.NewText($"{npc.FullName} just got this buff: {Lang.GetBuffName(npc.buffType[i])}, ID: {npc.buffType[i]} Counter: {buffCounter[i]}");
+                    //Main.NewText($"{npc.FullName} just got this buff: {Lang.GetBuffName(npc.buffType[i])}, ID: {npc.buffType[i]} Counter: {buffCounter[i]}");
 
                     if (buffCounter[i] >= ReturnAnomalyBuildup(npc.buffType[i]))
                     {
@@ -46,7 +46,7 @@ namespace ZZZMod.Content.AttributeAnomaly
                 if (npc.buffType[i] != 0 && previousBuffs[i] != 0 && previousBuffTimes[i] < npc.buffTime[i]) // If the debuff time increases, we can assume it is reapplied.
                 {
                     buffCounter[i]++;
-                    Main.NewText($"{npc.FullName} is hit with this buff again: {Lang.GetBuffName(npc.buffType[i])}. It has been {buffCounter[i]} times so far!");
+                    //Main.NewText($"{npc.FullName} is hit with this buff again: {Lang.GetBuffName(npc.buffType[i])}. It has been {buffCounter[i]} times so far!");
                     if (buffCounter[i] >= ReturnAnomalyBuildup(npc.buffType[i]))
                     {
                         buffCounter[i] = 0;
@@ -108,6 +108,44 @@ namespace ZZZMod.Content.AttributeAnomaly
 
             npc.StrikeNPC(npc.CalculateHitInfo(totalDamage, 1));
             Main.NewText($"Inflicted attribute anomaly! Did {anomalyMultiplier} * {buffDamage} * {remainingBuff/60} = {totalDamage} damage!");
+
+            float disorderCalc = 0;
+            int totalDisorder = 0;
+
+            for (int i = 0; i < buffCounter.Length; i++) // After activating an anomaly effect, I want to see if any other anomaly buildups are tracked, and then add their potential damages as disorder!
+            {
+                if (buffCounter[i] > 0)
+                {
+                    int buffTypeToCalculate = npc.buffType[i];
+                    // in short, this is the damage it would deal if we applied the attribute anomaly early, accounting for the amount of anomaly buildup so far
+                    disorderCalc += (float)ReturnAnomalyMultiplier(buffTypeToCalculate) * (float)ReturnBuffDPS(buffTypeToCalculate) * ((float)npc.buffTime[i]/60) * ((float)buffCounter[i] / (float)ReturnAnomalyBuildup(buffTypeToCalculate));
+                    buffCounter[i] = 0;
+                }
+            }
+            disorderCalc *= 4f; // bonus damage (everyone likes that)
+            totalDisorder = (int)disorderCalc;
+
+            if (totalDisorder > 0)
+            {
+                Main.NewText($"Inflicted disrder! Did {totalDisorder} damage!");
+                npc.StrikeNPC(npc.CalculateHitInfo(totalDisorder, 1));
+                CombatText.NewText(
+                    npc.Hitbox,
+                    Color.AntiqueWhite,
+                    "Disorder!",
+                    dramatic: true
+                    );
+                CombatText.NewText(
+                    npc.Hitbox,
+                    Color.AntiqueWhite,
+                    totalDisorder + "!",
+                    dramatic: true
+                    );
+            }
+            else
+            {
+                Main.NewText($"Disorder calc = {disorderCalc}");
+            }
 
             SoundEngine.PlaySound(SoundID.Item14, center);
         }
@@ -247,13 +285,40 @@ namespace ZZZMod.Content.AttributeAnomaly
             }
         }
 
+        public static string ReturnAnomalyString(int givenBuffID)
+        {
+            switch (givenBuffID)
+            {
+                case BuffID.Poisoned:
+                    return "Poisoned";
+                case BuffID.OnFire:
+                    return "On Fire";
+                case BuffID.Frostburn:
+                    return "Frostburn";
+                case BuffID.OnFire3: // hellfire is apparently onfire3, and there's no onfire2 lol
+                    return "Hellfire";
+                case BuffID.ShadowFlame:
+                    return "ShadowFlame";
+                case BuffID.CursedInferno:
+                    return "Cursed Inferno";
+                case BuffID.Frostburn2: // frostbite
+                    return "Frostbite";
+                case BuffID.Venom:
+                    return "Acid Venom";
+                case BuffID.Daybreak:
+                    return "Daybreak";
+                default:
+                    return "error: developer did not account for this anomaly :(";
+            }
+        }
+
         public void ActivateAnomalyEffect(NPC npc, int givenBuffID, int totalDamage)
         {
 
             CombatText.NewText(
                 npc.Hitbox,
                 ReturnAnomalyColor(givenBuffID),
-                "Anomaly!",
+                ReturnAnomalyString(givenBuffID)+"!",
                 dramatic: true
                 );
             CombatText.NewText(
@@ -266,7 +331,7 @@ namespace ZZZMod.Content.AttributeAnomaly
             switch(givenBuffID)
             {
                 case BuffID.OnFire:
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 3; i++)
                     {
                         Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
                         Projectile.NewProjectile(
@@ -274,14 +339,44 @@ namespace ZZZMod.Content.AttributeAnomaly
                             npc.Top - new Vector2(0, 60), // unfortunately, ball of fire does not pierce enemies so im spawning them on top of the enemy
                             velocity,
                             ProjectileID.BallofFire,
-                            15, // damage
+                            ReturnBuffDPS(givenBuffID), // 1 second of damage dealt
+                            0f, // knockback
+                            Main.myPlayer
+                        );
+                    }
+                    break;
+                case BuffID.Frostburn:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                        Projectile.NewProjectile(
+                            npc.GetSource_FromAI(),
+                            npc.Top - new Vector2(0, 60), // unfortunately, ball of frost does not pierce enemies so im spawning them on top of the enemy
+                            velocity,
+                            ProjectileID.BallofFrost, // funny enough, this gives frostbite
+                            ReturnBuffDPS(givenBuffID), // 1 second of damage dealt
+                            0f, // knockback
+                            Main.myPlayer
+                        );
+                    }
+                    break;
+                case BuffID.OnFire3:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                        Projectile.NewProjectile(
+                            npc.GetSource_FromAI(),
+                            npc.Top - new Vector2(0, 60), // unfortunately, ball of fire does not pierce enemies so im spawning them on top of the enemy
+                            velocity,
+                            ProjectileID.BallofFire,
+                            ReturnBuffDPS(givenBuffID), // 1 second of damage dealt
                             0f, // knockback
                             Main.myPlayer
                         );
                     }
                     break;
                 case BuffID.CursedInferno:
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 3; i++)
                     {
                         Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
                         Projectile.NewProjectile(
@@ -289,22 +384,22 @@ namespace ZZZMod.Content.AttributeAnomaly
                             npc.Center,
                             velocity,
                             ProjectileID.CursedFlameFriendly,
-                            40, // damage
+                            ReturnBuffDPS(givenBuffID), // 1 second of damage dealt
                             0f, // knockback
                             Main.myPlayer
                         );
                     }
                     break;
                 case BuffID.Frostburn2:
-                    for (int i = 0; i < 10; i++)
+                    for (int i = 0; i < 3; i++)
                     {
                         Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
                         Projectile.NewProjectile(
                             npc.GetSource_FromAI(),
-                            npc.Center,
+                            npc.Top - new Vector2(0, 60),
                             velocity,
-                            ProjectileID.BallofFrost,
-                            50, // damage
+                            ProjectileID.BallofFrost, // unfortunately, ball of frost does not pierce enemies so im spawning them on top of the enemy
+                            ReturnBuffDPS(givenBuffID), // 1 second of damage dealt
                             0f, // knockback
                             Main.myPlayer
                         );
