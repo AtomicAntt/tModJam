@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Linq;
 using Terraria;
 using Terraria.Audio;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -16,6 +18,8 @@ namespace ZZZMod.Content.AttributeAnomaly
 
         public int[] buffCounter = new int[20]; // This signifies the amount of times the same buff is applied on each buff slot.
         public Dictionary<int, int> previousBuffCounters = new(); // Buff type : # of times debuff applied (which is the counter). Purpose: in case debuffs run out but you still want to apply the attribute anomaly.
+
+        public Dictionary<int, float> anomalyProgress = new(); // Buff ID : progress ratio
 
         public override void AI(NPC npc)
         {
@@ -60,6 +64,20 @@ namespace ZZZMod.Content.AttributeAnomaly
             // Update previous buffs & times
             npc.buffType.CopyTo(previousBuffs, 0);
             npc.buffTime.CopyTo(previousBuffTimes, 0);
+
+            // Update the anomalyProgress dictionary which a UI will use to display progress to anomaly buildup
+            anomalyProgress.Clear();
+            for (int i = 0; i < npc.buffType.Length; i++)
+            {
+                if (npc.buffType[i] != 0)
+                {
+                    int buildupNeeded = ReturnAnomalyBuildup(npc.buffType[i]);
+                    if (buildupNeeded > 0)
+                    {
+                        anomalyProgress[npc.buffType[i]] = buffCounter[i] / (float)buildupNeeded;
+                    }
+                }
+            }
         }
 
         public void Explode(NPC npc, int remainingBuff, int givenBuffID)
@@ -148,7 +166,7 @@ namespace ZZZMod.Content.AttributeAnomaly
             }
         }
 
-        public static int ReturnAnomalyBuildup(int givenBuffID) // Amount of times a buff must be applied AFTER being applied to inflict anomaly attribute dmg
+        public static int ReturnAnomalyBuildup(int givenBuffID) // Amount of times a buff must be applied to inflict anomaly attribute dmg
         {
             switch (givenBuffID) 
             {
@@ -202,34 +220,128 @@ namespace ZZZMod.Content.AttributeAnomaly
             }
         }
 
+        public static Color ReturnAnomalyColor(int givenBuffID)
+        {
+            switch (givenBuffID)
+            {
+                case BuffID.Poisoned:
+                    return Color.YellowGreen;
+                case BuffID.OnFire:
+                    return Color.Orange;
+                case BuffID.Frostburn:
+                    return Color.LightBlue;
+                case BuffID.OnFire3: // hellfire is apparently onfire3, and there's no onfire2 lol
+                    return Color.OrangeRed;
+                case BuffID.ShadowFlame:
+                    return Color.MediumPurple;
+                case BuffID.CursedInferno:
+                    return Color.GreenYellow;
+                case BuffID.Frostburn2: // frostbite
+                    return Color.SkyBlue;
+                case BuffID.Venom:
+                    return Color.Purple;
+                case BuffID.Daybreak:
+                    return Color.Yellow;
+                default:
+                    return Color.Red;
+            }
+        }
+
         public void ActivateAnomalyEffect(NPC npc, int givenBuffID, int totalDamage)
         {
+
             CombatText.NewText(
                 npc.Hitbox,
-                Color.MediumPurple,
+                ReturnAnomalyColor(givenBuffID),
                 "Anomaly!",
                 dramatic: true
                 );
             CombatText.NewText(
                 npc.Hitbox,
-                Color.MediumPurple,
+                ReturnAnomalyColor(givenBuffID),
                 totalDamage+"!",
                 dramatic: true
                 );
 
-            for (int i = 0; i < 10; i++)
+            switch(givenBuffID)
             {
-                Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
-                Projectile.NewProjectile(
-                    npc.GetSource_FromAI(),
-                    npc.Center,
-                    velocity,
-                    ProjectileID.CursedFlameFriendly,
-                    40,
-                    2f,
-                    Main.myPlayer
-                );
+                case BuffID.OnFire:
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                        Projectile.NewProjectile(
+                            npc.GetSource_FromAI(),
+                            npc.Top - new Vector2(0, 60), // unfortunately, ball of fire does not pierce enemies so im spawning them on top of the enemy
+                            velocity,
+                            ProjectileID.BallofFire,
+                            15, // damage
+                            0f, // knockback
+                            Main.myPlayer
+                        );
+                    }
+                    break;
+                case BuffID.CursedInferno:
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                        Projectile.NewProjectile(
+                            npc.GetSource_FromAI(),
+                            npc.Center,
+                            velocity,
+                            ProjectileID.CursedFlameFriendly,
+                            40, // damage
+                            0f, // knockback
+                            Main.myPlayer
+                        );
+                    }
+                    break;
+                case BuffID.Frostburn2:
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Vector2 velocity = Main.rand.NextVector2Circular(6f, 6f);
+                        Projectile.NewProjectile(
+                            npc.GetSource_FromAI(),
+                            npc.Center,
+                            velocity,
+                            ProjectileID.BallofFrost,
+                            50, // damage
+                            0f, // knockback
+                            Main.myPlayer
+                        );
+                    }
+                    break;
             }
+
+        }
+
+        public override bool PreDraw(NPC npc, SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
+        {
+            if (anomalyProgress.Count > 0)
+            {
+                Vector2 barPosition = npc.Top - new Vector2(0, 60) - screenPos;
+                foreach (var kv in anomalyProgress)
+                {
+                    float ratio = kv.Value;
+                    int givenBuffID = kv.Key;
+                    DrawProgressBar(spriteBatch, barPosition, ratio, ReturnAnomalyColor(givenBuffID));
+                    barPosition.Y -= 10; // stack multiple bars
+                }
+            }
+
+            return true;
+        }
+
+        private void DrawProgressBar(SpriteBatch spriteBatch, Vector2 position, float progress, Color color)
+        {
+            int width = 40;
+            int height = 6;
+            Texture2D blank = TextureAssets.MagicPixel.Value;
+
+            Rectangle bgRect = new((int)(position.X - width / 2), (int)(position.Y - height / 2), width, height);
+            spriteBatch.Draw(blank, bgRect, Color.Black * 0.5f);
+
+            Rectangle fgRect = new(bgRect.X, bgRect.Y, (int)(width * progress), height);
+            spriteBatch.Draw(blank, fgRect, color);
         }
     }
 }
