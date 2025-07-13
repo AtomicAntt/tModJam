@@ -1,1 +1,40 @@
-This description will show up on the steam page, check out https://steamcommunity.com/comment/Guide/formattinghelp.
+Introducing the Attribute Anomaly mod!
+
+This mod takes the gameplay mechanic of Attribute Anomaly from Zenless Zone Zero by letting you obtain Anomaly Buildup by stacking the same damaging debuff (Ex. Frostburn, On Fire!, and Cursed Inferno) to inflict an Attribute Anomaly!
+
+Inflicting attribute anomaly while having building up anomaly for a different attribute (damaging debuff) will inflict disorder and consume the anomaly buildup for bonus burst damage! For example, if you use the Flamethrower to inflict Hellfire and the Elf Melter to inflict frostbite, fully building up Anomaly for either one will inflict both the Attribute Anomaly and Disorder!
+
+Usually applying damaging debuffs to the bosses you fight don't feel impactful, that 15 dps doesn't feel like anything at all when you're up against opponents with tens of thousands of HP.
+
+Now, you can drink the Flask of Fire/Cursed Flames/Poison/Venom and use other weapons that apply some kind of damaging debuff and conquer bosses with the help of Attribute Anomalies!
+
+===========================================
+Anomaly Attribute Details
+===========================================
+
+Damage dealt by Attribute Anomalies are calculated by:
+
+Anomaly Multiplier * Buff Damage (for one second) * Remaining Buff Time (in seconds)
+
+For example, if you apply an Attribute Anomaly with Poison, where the buff time lasts for 10 seconds, you will get:
+
+4 * 2 * 10 = 80 damage of Poison Attribute Anomaly DMG
+
+-----------------------------------------
+
+Damage dealt by Disorder are calculated by the sum of this with all other damaging debuffs inflicted:
+
+4 * Anomaly Multiplier * Buff Damage (for one second) * Remaining Buff Time (in seconds) * Ratio of current Anomaly Buildup / required Anomaly Buildup to inflict Attribute Anomaly
+
+For example, if you apply an Attribute Anomaly with HellFire using the Flamethrower, and then accumulate half of the required anomaly buildup for Frostbite with the Elf Melter, you will receive:
+
+3 * 15 * 20 = 600 damage of HellFire Attribute Anomaly DMG
+
++
+
+4 * 2 * 25 * 20 * 0.5 = 2000 damage of Disorder from the Frostbite accumulation!
+
+= 2600 total damage!
+
+And if you want to see how I made it, the open source is here:
+https://github.com/AtomicAntt/tModJam
